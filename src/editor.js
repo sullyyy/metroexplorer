@@ -92,7 +92,7 @@ class Editor {
 		this.buttonsAssArr["seloptionsB"] = this.seloptionsB;
 		this.seloptionsB.changed(seloptionsBEvent);
 		
-		this.lvlB = createButton('Level');
+		this.lvlB = createButton('Stations');
 		this.lvlB.size(65,20)
 		this.lvlB.position(cnv.elt.getBoundingClientRect().x+280, cnv.elt.getBoundingClientRect().y+10);
 		this.lvlB.attribute("disabled",true);
@@ -106,14 +106,28 @@ class Editor {
 		this.buttons.push(this.sellvlB)
 		this.buttonsAssArr["sellvlB"] = this.sellvlB;
 		
+		this.tunB = createButton('Tunnels');
+		this.tunB.size(65,20)
+		this.tunB.position(cnv.elt.getBoundingClientRect().x+345, cnv.elt.getBoundingClientRect().y+10);
+		this.tunB.attribute("disabled",true);
+		this.buttons.push(this.tunB)
+		this.seltunB = createSelect();
+		this.seltunB.position(cnv.elt.getBoundingClientRect().x + 345, cnv.elt.getBoundingClientRect().y+30);
+		for(let i = 0; i < tunnelToLoadStr.length; i++)
+				this.seltunB.option("layout " + i,i);
+		this.seltunB.changed(seltunBEvent);
+		this.seltunB.size(65,20)
+		this.buttons.push(this.seltunB)
+		this.buttonsAssArr["seltunB"] = this.seltunB;
+		
 		this.dispB = createButton('Display');
 		this.dispB.size(65,20)
-		this.dispB.position(cnv.elt.getBoundingClientRect().x+345, cnv.elt.getBoundingClientRect().y+10);
+		this.dispB.position(cnv.elt.getBoundingClientRect().x+410, cnv.elt.getBoundingClientRect().y+10);
 		this.dispB.attribute("disabled",true);
 		this.buttons.push(this.dispB)
 		
 		this.seldispB = createSelect();
-		this.seldispB.position(cnv.elt.getBoundingClientRect().x + 345, cnv.elt.getBoundingClientRect().y+30);
+		this.seldispB.position(cnv.elt.getBoundingClientRect().x + 410, cnv.elt.getBoundingClientRect().y+30);
 		this.seldispB.option('Display',0);
 		this.seldispB.option('lighting',1);
 		this.seldispB.option('hitboxes',2);
@@ -260,11 +274,24 @@ class Editor {
 				//checks if click within map boundaries
 				if(iw_i >= 0 && iw_i < sizeY && iw_j >= 0 && iw_j < sizeX)
 				{
-					//put tile 
-					map.levels[map.curent_level].lvl_array[iw_j][iw_i] = assets_array[editor.selected];
+					//adding dynamic element
+					if(editor.selected == 10)
+						{
+							console.log(" ", map.levels[map.curent_level].dynamic_elements)
+							//adding a fire pit
+							map.levels[map.curent_level].dynamic_elements.push(new Tile_To_Draw(900, false, iw_j,iw_i,new FirePit_Tile(iw_j,iw_i)))
+							//resorting z index 
+							map.levels[map.curent_level].sort();
+						}
+					//adding background element
+					else
+					{
+						//put tile 
+						map.levels[map.curent_level].lvl_array[iw_j][iw_i] = assets_array[editor.selected];
+						//resorting z index 
+						map.levels[map.curent_level].sort();
+					}
 					
-					//resorting z index 
-					map.levels[map.curent_level].sort();
 				}
 			}
 			mouseIsPressed = false;
@@ -383,6 +410,21 @@ function sellvlBEvent(){
 	editor.buttonsAssArr["sellvlB"].elt.blur();
 }
 
+function seltunBEvent(){
+	
+	//returns options selected
+	let selected = editor.buttonsAssArr["seltunB"].selected();
+	
+	//changing level
+	map.curent_level = parseInt(selected)+1000;
+	
+	//setting player spawn position
+	player.setSpawnPosition();
+	
+	//defocusing select list
+	editor.buttonsAssArr["seltunB"].elt.blur();
+}
+
 //new option event
 function mp_new(){
 	map.levels[map.curent_level].create();
@@ -390,7 +432,21 @@ function mp_new(){
 
 //save option event
 function mp_save(){
-	File.save(map.levels[map.curent_level].lvl_array, game_map.stations[map.curent_level].name)
+	
+	//creating new map object with background array and dynamic array
+	let combined_map = {lvl_array:map.levels[map.curent_level].lvl_array,dynamic_array:map.levels[map.curent_level].dynamic_elements}
+	
+	//console.log("combif ", combined_map);
+	
+	if(map.curent_level >= 1000)
+		File.save(combined_map, "tunnel")
+	else
+		File.save(combined_map, game_map.stations[map.curent_level].name)
+	
+	/*if(map.curent_level >= 1000)
+		File.save(map.levels[map.curent_level].lvl_array, "tunnel")
+	else
+		File.save(map.levels[map.curent_level].lvl_array, game_map.stations[map.curent_level].name)*/
 }
 
 //load option event

@@ -4,12 +4,14 @@ const PLAY = 1;
 const HOW_TO_PLAY = 2;
 const EDITOR = 3;
 const GAME_MAP = 4;
+const LVL_TRANSITION = 5;
 
 let game_scale = 1.0;
 
 let keys = [];
 
 let  pg;
+let  pg2;
 
 let gameState = MAIN_MENU;
 let fr = 30;
@@ -36,7 +38,7 @@ function preload() {
 	
 	player_img = loadImage('assets/img/player.png');
 	
-	light_circle = loadImage('assets/img/light_circle.png');
+	light_circle = loadImage('assets/img/test_circle.png');
 	
 	stations_icons = loadImage('assets/img/station_icons.png');
 	
@@ -50,15 +52,8 @@ function preload() {
 			assets_array = json;
 	});
 	
-	//loading stations data
-	for(let i = 0; i < stationsToLoadStr.length; i++)
-	{
-		stationsData.push(loadJSON(stationsToLoadStr[i]));
-	}
-	
-	//loading assets data
-	//File.loadAssets();
-	//File.loadStationsData();
+	File.loadStations();
+	File.loadTunnels();
 }
 
 async function wait(){
@@ -75,6 +70,10 @@ function setup() {
 	
 	//creating an offscreen drawing buffer
 	pg = createGraphics(windowWidth,windowHeight);
+	
+	pg_minimap = createGraphics(windowWidth,windowHeight);
+	pg_circle = createGraphics(windowWidth,windowHeight);
+	pg_circle.translate(10,10)
 	
 	//setting up framerate
 	frameRate(fr);
@@ -98,6 +97,11 @@ function setup() {
 	
 	//creating editor
 	editor = new Editor();
+	
+	//creating minimap
+	minimap = new MiniMap();
+	
+	messageTravelTo = new Message(0,0,"press E to travel to ",false)
 	
 }
 
@@ -140,6 +144,10 @@ function draw() {
 			camera.move();
 			Menu.s_return();
 			drawFrameRate();
+		break;
+			
+		case LVL_TRANSITION:
+			map.drawlvltrans();
 		break;
 	}
 	

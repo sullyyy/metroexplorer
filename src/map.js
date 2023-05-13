@@ -16,6 +16,58 @@ class Empty_Tile {
 	}
 }
 
+class FirePit_Tile {
+	constructor(i,j) {
+	  this.game_id = 10;
+	  this.draw_id = 10;
+	  this.data_id = 0;
+	  this.hitboxX = 30;
+	  this.hitboxY = 50;
+	  this.hitboxW = 40;
+	  this.hitboxH = 0;
+	  this.decalX = 0;
+	  this.decalY = 0;
+	  this.srcW = 100;
+	  this.srcH = 100;
+	  this.customZIndex = 0;
+	  this.group = "FIREPIT_LIGHT";
+		this.i = i;
+		this.j = j;
+		this.y = i*100 + this.hitboxY;
+		this.h = this.hitboxH;
+	 this.animation = new Fire_Animation(4);
+	}
+	
+	draw(){
+		image(map.img_array[0],this.j*100+camera.offSetX,this.i*100+camera.offSetY,100,100,1000,this.animation.updateAnimation(),100,100);
+	}
+	
+	
+}
+
+class Flare_Item {
+	constructor(x,y) {
+		this.x = x;
+		this.y = y;
+		this.h = 5;
+		this.i = floor(x/100);
+		this.j = floor(y/100);
+		this.group = "LIGHT";
+	}
+	
+	draw(){
+		//image(map.img_array[0],this.j*100+camera.offSetX,this.i*100+camera.offSetY,100,100,1000,this.animation.updateAnimation(),100,100);
+		push();
+			fill(255,0,0);
+			rect(this.x+camera.offSetX,this.y+camera.offSetY,10,5);
+		pop();
+	}
+	
+	
+}
+
+
+
 class Tile_To_Draw {
 	constructor(tile_id,bckgrnd,i,j,obj) {
 		this.tile_id = tile_id;
@@ -44,12 +96,29 @@ class Tile_To_Draw {
 
 
 class Level {
-	constructor (id,sizeX,sizeY) {
+	constructor (id,name,sizeX,sizeY,id_left,id_right) {
 		this.id = id;
+		this.name = name;
 		this.sizeX = sizeX;
 		this.sizeY = sizeY;
+		this.dynamic_elements = [];
+		this.id_left = id_left;
+		this.id_right = id_right;
+		
+		//id < 2 = stations
 		if(id < 2)
+		{
 			this.lvl_array = stationsData[id];
+			this.dynamic_elements = stationsDataDyn[id];
+		}
+		//id >= 1000 = tunnels
+		else if(id >= 1000)
+		{
+			this.lvl_array = tunnelData[id - 1000];
+			this.dynamic_elements = tunnelDataDyn[id - 1000];
+			
+		}
+		//create empty level
 		else
 		{
 			this.lvl_array;
@@ -57,11 +126,11 @@ class Level {
 		}
 		
 		this.z_index_map = [];
-		
-		//console.log("stationsData[id]; ", stationsData[id])
-		
+		//this.dynamic_elements = [];
 		
 		this.sort();
+		
+		
 	}
 	
 	create(){
@@ -85,6 +154,8 @@ class Level {
 					this.lvl_array[i][j] = new Empty_Tile();
 				}
 			}
+		
+		this.dynamic_elements = [];
 	}
 	
 	//adding tiles to draw list and sorting by z index
@@ -104,6 +175,9 @@ class Level {
 				}
 			}
 		
+		//adding dynamic elements (firepits, etc)
+		this.z_index_map = this.z_index_map.concat(this.dynamic_elements);
+		
 		//adding player
 		this.z_index_map.push(new Tile_To_Draw(1000, false, 0,0,player));
 		
@@ -114,6 +188,17 @@ class Level {
 	resort(){
 		//sorting by z index
 		this.z_index_map.sort(function(a, b){return a.get_z_index() - b.get_z_index()});
+	}
+	
+	//adding dynamic elements to list and z index
+	addDynamicElement(obj){
+		
+		this.dynamic_elements.push(obj);
+		
+		this.z_index_map.push(this.dynamic_elements[this.dynamic_elements.length-1])
+		
+		this.z_index_map.sort(function(a, b){return a.get_z_index() - b.get_z_index()});
+		
 	}
 	
 }
@@ -127,6 +212,11 @@ class Map {
 		this.curent_level = 0;
 		
 		this.addLevels();
+		
+		this.lastLvlTrans = new Date().getTime();
+		this.lvltransframe = 0;
+		
+		this.fire_animation = new Fire_Animation(4);
 		
 	}
 	
@@ -143,13 +233,19 @@ class Map {
 	
 	//adding levels to map
 	addLevels(){
-		this.levels.push(new Level(0,10,10));
-		this.levels.push(new Level(1,5,5));
-		this.levels.push(new Level(2,10,10));
-		this.levels.push(new Level(3,10,10));
+		//stations
+		this.levels.push(new Level(0,"OKHOTNY RYAD",10,10,-1,1000));
+		this.levels.push(new Level(1,"TEATRAL'NAYA",10,10,1000,1001));
+		//this.levels.push(new Level(2,5,20));
+		//tunnels
+		this.levels[1000] = new Level(1000,"DARK TUNNEL",5,20,0,1);
+		this.levels[1001] = new Level(1001,"DARK TUNNEL",5,20,1,-1);
 	}
 	
 	draw(){
+		
+		if(gameState == LVL_TRANSITION)
+			return;
 		
 		//draw floor texture
 		this.drawFloor();
@@ -157,14 +253,17 @@ class Map {
 		//draw background objects and dynamic objects
 		this.drawGameObjects();
 		
-		//draw shadows and lighting
-		this.drawShadowsLighting();
-		
 		//draw grid (editor only)
 		this.drawGrid();
 		
 		//draw hud
 		this.drawHUD();
+		
+		//draw minimap
+		minimap.draw();
+		
+		//draw messages
+		messageTravelTo.draw();
 	}
 	
 	drawFloor(){
@@ -175,9 +274,15 @@ class Map {
 		//drawing floor texture
 		fill(88,88,88);
 		rect(camera.offSetX*game_scale,camera.offSetY*game_scale,100*this.levels[this.curent_level].sizeY*game_scale,100*this.levels[this.curent_level].sizeX*game_scale)
+		
+		
 	}
 	
 	drawGameObjects(){
+		
+	    pg.clear();
+		
+		
 		
 		//looping around z index drawing list
 		for(let i = 0; i < this.levels[this.curent_level].z_index_map.length; i++)
@@ -193,6 +298,8 @@ class Map {
 						let destY = tile.i*100+camera.offSetY + tile.obj.decalY;
 						let srcX = tile.obj.draw_id*100;
 						let srcY = 0;
+						if(tile.obj.group == "WALL_LIGHT")
+							srcY = this.fire_animation.updateAnimation();
 						let srcW = tile.obj.srcW;
 						let srcH = tile.obj.srcH;
 						let destW = srcW;
@@ -200,6 +307,9 @@ class Map {
 						
 						//drawing tile
 						image(this.img_array[img_array_id],destX,destY,destW,destH,srcX,srcY,srcW,srcH);
+						
+						//making tile darker
+						this.drawDarkness(destX,destY,destW,destH)
 						
 						//drawHitbox
 						this.drawHitbox(tile,destX,destY);
@@ -213,17 +323,34 @@ class Map {
 						
 					}
 		
-				if(gameState == EDITOR)
-					continue;
+				//if(gameState == EDITOR)
+					//continue;
 		
 				
 		//draw dynamic objects (characters, effects, pickable items, etc)
 				if(!tile.bckgrnd)
 					{
 						tile.obj.draw();
+						//draws tile info
+						push();
+							fill(0)
+							textSize(10);
+							text("z " + tile.get_z_index(),player.x + camera.offSetX + 25,player.y + camera.offSetY + 25)
+						pop();
 					}
 			}
 		
+		//draws lighting
+		this.drawLighting();
+		
+		//setting blendMode to apply darkness and lights to map
+		blendMode(MULTIPLY  );
+		
+		//blending offscreen buffer with drawn map
+		image(pg, 0, 0);
+		
+		//returning to normal blend mode
+		blendMode(BLEND);
 	}
 	
 	//draw hitbox of objects
@@ -246,70 +373,115 @@ class Map {
 		pop();
 	}
 	
-	//draw shadows and lighting
-	drawShadowsLighting()
+	//making tile at coord darker
+	drawDarkness(x,y,w,h)
 	{
 		if(!shadowsLighting_active)
 			return;
 		
-		//creating shadow dark color
-		let shadows = color(50, 50, 50);
-		//shadows.setAlpha(128);
+		let shadows_color = 5;
 		
-		//clearing offscreen buffer
-		pg.clear();
+		if(this.curent_level < 1000)
+			shadows_color = 55;
+		
+		let shadows = color(shadows_color, shadows_color, shadows_color);
 		
 		//drawing shadows (dark rectangle)
-  		pg.fill(shadows);
-		pg.rect(camera.offSetX,camera.offSetY,100*this.levels[this.curent_level].sizeY*game_scale,100*this.levels[this.curent_level].sizeX*game_scale)
-		
-		//drawing lights (white shapes)
 		pg.noStroke();
-		pg.fill(255,255,255);
+  		pg.fill(shadows);
+		pg.rect(x,y,w,h)
+	}
+	
+	//draws lighting in level
+	drawLighting()
+	{
+		if(!shadowsLighting_active)
+			return;
 		
-		//drawing player close vision circle
-		//pg.circle(player.x+player.w/2+camera.offSetX, player.y+player.h/2+camera.offSetY, 150);
+		pg.fill(255)
+			
+		//searching for lights in level and drawing white circles
+		for(let i = 0; i < this.levels[this.curent_level].z_index_map.length; i++)
+			{
+				let tile = this.levels[this.curent_level].z_index_map[i];
+				
+				if(tile.obj.group == "WALL_LIGHT")
+					pg.image(light_circle,tile.j*100+50+camera.offSetX-75,tile.i*100+50+camera.offSetY-75)
+				else if(tile.obj.group == "FIREPIT_LIGHT")
+					pg.image(light_circle,tile.j*100+50+camera.offSetX-150,tile.i*100+50+camera.offSetY-150,300,300)
+				else if(tile.obj.group == "LIGHT")
+				{
+					pg.tint(255, 0, 0, 128);
+					pg.image(light_circle,tile.obj.x+camera.offSetX-75,tile.obj.y+camera.offSetY-75,150,150)
+					pg.noTint();
+				}
+			}
+	}
+	
+	
+	//draw flashlight
+	drawFlashLight()
+	{
+		if(!shadowsLighting_active)
+			return;
 		
-		//drawing player torchlight (white triangle)
+		
+		//calculating triangle coord
 		let tlx1 = player.x+player.w/2+camera.offSetX + 250*player.faceDirX;
 		let tly1 = player.y+player.h/2+camera.offSetY - 40;
 		
 		let tlx2 =  player.x+player.w/2+camera.offSetX + 250*player.faceDirX;
 		let tly2 =  player.y+player.h/2+camera.offSetY + 40;
 		
+		//checking if going up or down
 		if(player.faceDirY == 1 || player.faceDirY == -1)
 		{
 			tlx1 = player.x+player.w/2+camera.offSetX - 40;
 			tly1 = player.y+player.h/2+camera.offSetY + 250*player.faceDirY;
-		
+			
 			tlx2 =  player.x+player.w/2+camera.offSetX + 40;
 			tly2 =  player.y+player.h/2+camera.offSetY + 250*player.faceDirY;
+			
+			//getting start tile pos
+			let i = floor((player.x+player.w)/100)
+			let j = floor((player.y+player.h)/100)
+			
+			//recalculating triangle coord to stop at walls (up)
+			if(player.faceDirY == -1)
+			{
+				for(let k = 1; k < 3;k++)
+				{
+					if(map.levels[map.curent_level].lvl_array[j-k][i].group == "WALL" || map.levels[map.curent_level].lvl_array[j-k][i].group == "WALL_LIGHT")
+					{
+						tly2 =  (j-k)*100 + camera.offSetY;
+						tly1 =  (j-k)*100 + camera.offSetY;
+						break;
+					}
+				}
+			}
+			//recalculating triangle coord to stop at walls (down)
+			else if(player.faceDirY == 1)
+			{
+				for(let k = 0; k < 3;k++)
+				{
+					if(map.levels[map.curent_level].lvl_array[j+k][i].group == "WALL" || map.levels[map.curent_level].lvl_array[j+k][i].group == "WALL_LIGHT")
+					{
+						tly2 =  (j+k)*100 + 100 + camera.offSetY;
+						tly1 =  (j+k)*100 + 100 + camera.offSetY;
+						break;
+					}
+				}
+			}
+			
+			
+		
+			
 		}
 		
-		
-		
-		//searching for lights in level and drawing white circles
-		for(let i = 0; i < this.levels[this.curent_level].z_index_map.length; i++)
-			{
-				let tile = this.levels[this.curent_level].z_index_map[i];
-				
-				if(tile.obj.group == "WALL_LIGHT" || tile.obj.group == "FIREPIT_LIGHT")
-					//pg.circle(tile.j*100+50+camera.offSetX, tile.i*100+50+camera.offSetY, 150);
-					pg.image(light_circle,tile.j*100+50+camera.offSetX-75,tile.i*100+50+camera.offSetY-75)
-			}
-		
 		//drawing player torchlight (white triangle)
+		pg.fill(255,255,255);
 		if(gameState != EDITOR && player.flashlightOn)
 			pg.triangle(player.x+player.w/2+camera.offSetX, player.y+player.h/2+camera.offSetY,tlx1,tly1,tlx2,tly2);
-		
-		//setting blend mode to multiply to make dark dark and light light
-		blendMode(MULTIPLY);
-		
-		//blending offscreen buffer with drawn map
-		image(pg, 0, 0);
-		
-		//returning to normal blend mode
-		blendMode(BLEND);
 	}
 	
 	//drawing grid
@@ -349,7 +521,30 @@ class Map {
 			text('radiation', 950 , 30);
 			text('sleep', 950 , 40);
 		
-			text('Station : ' + game_map.stations[map.curent_level].name, windowWidth/2,10);
+			if(map.curent_level >= 1000)
+				text('Tunnel', windowWidth/2,10);
+			else
+				text('Station : ' + game_map.stations[map.curent_level].name, windowWidth/2,10);
 		pop();
+	}
+	
+	drawlvltrans()
+	{
+		let now = new Date().getTime();
+		let delta = now - this.lastLvlTrans;
+		if (delta >= 33) {
+			this.lastLvlTrans = now;
+			let squareColor = color(0, 0, 0);
+			squareColor.setAlpha(20*this.lvltransframe);
+			fill(squareColor);
+			rect(0,0,windowWidth,windowHeight)
+			this.lvltransframe++;
+			if(this.lvltransframe == 10)
+			{
+				this.lvltransframe = 0;
+				gameState = PLAY;
+				noTint();
+			}
+		}
 	}
 }

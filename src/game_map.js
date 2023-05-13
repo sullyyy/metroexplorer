@@ -1,13 +1,14 @@
-
-
-
 class Station{
-	constructor (x,y,name,color) {
+	constructor (id,x,y,name,color) {
+		this.id = id;
 		this.x = x;
 		this.y = y;
 		this.name = name;
 		this.color = color;
 		this.hovered = false;
+		this.flashingProg = 0;
+		this.last = new Date().getTime();
+		this.sens = 1;
 	}
 	
 	getColor()
@@ -41,14 +42,27 @@ class Station{
 	//drawing station
 	draw()
 	{
-		
-			/*strokeWeight(2); 
-			stroke(0, 0, 0);
-			fill(this.getColor());
-			circle((this.x+camera.offSetX), (this.y+camera.offSetY), 15*game_scale);*/
-		
+			//drawing stations icon on map
 			image(stations_icons,this.x+camera.offSetX-10,this.y+camera.offSetY-10,20,20,game_map.stationsIconIdAssArray[this.color]*26,0,26,26);
 		
+			//flashing stations if current level
+			if(map.curent_level == this.id)
+				{
+					noFill();
+					strokeWeight(4);
+					let now = new Date().getTime();
+					let delta = now - this.last;
+					if (delta >= 20) {
+						this.last = now;
+					this.flashingProg+=10*this.sens;
+					if(this.flashingProg >= 255 || this.flashingProg <= 0)
+						this.sens *= -1;
+					}
+					stroke(this.flashingProg, this.flashingProg, this.flashingProg);
+					circle((this.x+camera.offSetX), (this.y+camera.offSetY), 20*game_scale);
+				}
+			
+			//drawing red circle over station if hovered
 			if(this.hovered)
 			{
 				noFill();
@@ -60,6 +74,8 @@ class Station{
 				textSize(10);
 				text(this.name, this.x+camera.offSetX, (this.y+camera.offSetY));
 			}
+		
+		
 			
 			
 		
@@ -153,54 +169,54 @@ class Game_map {
 	createStations(){
 		
 		//red line
-		this.stations.push(new Station(500,400,"OKHOTNY RYAD","red"))
-		this.stations.push(new Station(515,415,"TEATRAL'NAYA","red"))
-		this.stations.push(new Station(530,430,"PLOSCHAD REVOLUTSII","red"))
-		this.stations.push(new Station(540,360,"LUBYANKA","red"))
-		this.stations.push(new Station(600,300,"CHISTYE PRUDY","red"))
-		this.stations.push(new Station(615,285,"KRASNYE VOROTA","red"))
-		this.stations.push(new Station(640,260,"KOMSOMOL'SKAYA","hanza"))
-		this.stations.push(new Station(657,245,"KOMSOMOL'SKAYA","red"))
-		this.stations.push(new Station(680,220,"KRASNOSEL'SKAYA","red"))
-		this.stations.push(new Station(700,200,"SOKOL'NIKI","red"))
-		this.stations.push(new Station(725,175,"PREOBRAZHENSKAYA PLOSCHAD'","red"))
-		this.stations.push(new Station(745,155,"CHERKIZOVSKAYA","red"))
-		this.stations.push(new Station(745,120,"ULITSA PODBEL'SKOGO","red"))
-		this.stations.push(new Station(465,435,"BIBLIOTEKA IM. LENINA","polis"))
-		this.stations.push(new Station(445,455,"BOROVITSKAYA","polis"))
-		this.stations.push(new Station(430,435,"ARBATSKAYA","polis"))
-		this.stations.push(new Station(445,420,"ALEKSANDROVSKIY SAD","polis"))
-		this.stations.push(new Station(400,500,"KROPOTKINSKAYA","red"))
-		this.stations.push(new Station(375,530,"PARK KULTURY","red"))
-		this.stations.push(new Station(360,545,"PARK KULTURY","hanza"))
-		this.stations.push(new Station(330,575,"FRUNZENSKAYA","red"))
-		this.stations.push(new Station(300,600,"SPORTIVNAYA","red"))
-		this.stations.push(new Station(265,635,"VOROB'EVY GORY","destroyed"))
-		this.stations.push(new Station(240,665,"UNIVERSITET","emerald"))
-		this.stations.push(new Station(215,690,"PROSPEKT VERNADSKOGO","emerald"))
-		this.stations.push(new Station(190,715,"YUGO-ZAPADNAYA","emerald"))
+		this.stations.push(new Station(0,500,400,"OKHOTNY RYAD","red"))
+		this.stations.push(new Station(1,515,415,"TEATRAL'NAYA","red"))
+		this.stations.push(new Station(2,530,430,"PLOSCHAD REVOLUTSII","red"))
+		this.stations.push(new Station(3,540,360,"LUBYANKA","red"))
+		this.stations.push(new Station(4,600,300,"CHISTYE PRUDY","red"))
+		this.stations.push(new Station(5,615,285,"KRASNYE VOROTA","red"))
+		this.stations.push(new Station(6,640,260,"KOMSOMOL'SKAYA","hanza"))
+		this.stations.push(new Station(7,657,245,"KOMSOMOL'SKAYA","red"))
+		this.stations.push(new Station(8,680,220,"KRASNOSEL'SKAYA","red"))
+		this.stations.push(new Station(9,700,200,"SOKOL'NIKI","red"))
+		this.stations.push(new Station(10,725,175,"PREOBRAZHENSKAYA PLOSCHAD'","red"))
+		this.stations.push(new Station(11,745,155,"CHERKIZOVSKAYA","red"))
+		this.stations.push(new Station(12,745,120,"ULITSA PODBEL'SKOGO","red"))
+		this.stations.push(new Station(13,465,435,"BIBLIOTEKA IM. LENINA","polis"))
+		this.stations.push(new Station(14,445,455,"BOROVITSKAYA","polis"))
+		this.stations.push(new Station(15,430,435,"ARBATSKAYA","polis"))
+		this.stations.push(new Station(16,445,420,"ALEKSANDROVSKIY SAD","polis"))
+		this.stations.push(new Station(17,400,500,"KROPOTKINSKAYA","red"))
+		this.stations.push(new Station(18,375,530,"PARK KULTURY","red"))
+		this.stations.push(new Station(19,360,545,"PARK KULTURY","hanza"))
+		this.stations.push(new Station(20,330,575,"FRUNZENSKAYA","red"))
+		this.stations.push(new Station(21,300,600,"SPORTIVNAYA","red"))
+		this.stations.push(new Station(22,265,635,"VOROB'EVY GORY","destroyed"))
+		this.stations.push(new Station(23,240,665,"UNIVERSITET","emerald"))
+		this.stations.push(new Station(24,215,690,"PROSPEKT VERNADSKOGO","emerald"))
+		this.stations.push(new Station(25,190,715,"YUGO-ZAPADNAYA","emerald"))
 		
 		
-		this.stations.push(new Station(595,230,"PROSPEKT MIRA","hanza"))
-		this.stations.push(new Station(610,215,"PROSPEKT MIRA","hanza"))
+		this.stations.push(new Station(26,595,230,"PROSPEKT MIRA","hanza"))
+		this.stations.push(new Station(27,610,215,"PROSPEKT MIRA","hanza"))
 		
-		this.stations.push(new Station(450,215,"NOVOSLOBOSDKAYA","hanza"))
+		this.stations.push(new Station(28,450,215,"NOVOSLOBOSDKAYA","hanza"))
 		
-		this.stations.push(new Station(365,260,"BELORUSSKAYA","hanza"))
+		this.stations.push(new Station(29,365,260,"BELORUSSKAYA","hanza"))
 		
-		this.stations.push(new Station(300,360,"KRASNOPRESNENSKAYA","hanza"))
+		this.stations.push(new Station(30,300,360,"KRASNOPRESNENSKAYA","hanza"))
 		
-		this.stations.push(new Station(320,500,"KIEVSKAYA","hanza"))
+		this.stations.push(new Station(31,320,500,"KIEVSKAYA","hanza"))
 		
-		this.stations.push(new Station(445,600,"OKTYABR'SKAYA","hanza"))
+		this.stations.push(new Station(32,445,600,"OKTYABR'SKAYA","hanza"))
 		
-		this.stations.push(new Station(530,605,"DOBRYNINSKAYA","hanza"))
+		this.stations.push(new Station(33,530,605,"DOBRYNINSKAYA","hanza"))
 		
-		this.stations.push(new Station(570,595,"PAVALETSKAYA","hanza"))
+		this.stations.push(new Station(34,570,595,"PAVALETSKAYA","hanza"))
 		
-		this.stations.push(new Station(665,525,"TAGANSKAYA","hanza"))
+		this.stations.push(new Station(35,665,525,"TAGANSKAYA","hanza"))
 		
-		this.stations.push(new Station(700,435,"KURSKAYA","hanza"))
+		this.stations.push(new Station(36,700,435,"KURSKAYA","hanza"))
 	}
 	
 	update(){
@@ -257,7 +273,7 @@ class Game_map {
 	drawBase(){
 		
 		//cleaning screen
-		background(255,255,255);
+		background(150,150,150);
 		
 		
 		
@@ -293,14 +309,3 @@ class Game_map {
 	
 	
 }
-
-/*function mouseWheel(event) {
-  if(event.deltaY  >  0)
-  {
-	   game_scale-=0.1
-  }
-  else
-  {
-	   game_scale+=0.1
-  }
-}*/

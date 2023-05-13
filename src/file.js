@@ -1,5 +1,9 @@
 let stationsToLoadStr = ["./data/stations/OKHOTNY RYAD.json","./data/stations/TEATRAL'NAYA.json"];
+let tunnelToLoadStr = ["./data/tunnels/tunnel_layout_1.json","./data/tunnels/tunnel_layout_2.json"];
 let stationsData = [];
+let stationsDataDyn = [];
+let tunnelData = [];
+let tunnelDataDyn = [];
 
 class File {
     constructor () {
@@ -20,6 +24,48 @@ class File {
 				);
 			}
 		
+		
+	}
+	
+	static loadStations(){
+		for(let k = 0; k < stationsToLoadStr.length; k++)
+			{
+		
+		loadJSON(stationsToLoadStr[k], function f(json){
+			
+			stationsData[k] = json.lvl_array;
+			stationsDataDyn[k] = json.dynamic_array;
+			
+			for(let i = 0; i < stationsDataDyn[k].length; i++)
+				{
+					stationsDataDyn[k][i] = new Tile_To_Draw(json.dynamic_array[i].tile_id, false, json.dynamic_array[i].i,json.dynamic_array[i].j,new FirePit_Tile(json.dynamic_array[i].i,json.dynamic_array[i].j));
+				}
+			
+		}
+		
+		);
+			}
+		
+	}
+	
+	static loadTunnels(){
+		for(let k = 0; k < tunnelToLoadStr.length; k++)
+			{
+		
+		loadJSON(tunnelToLoadStr[k], function f(json){
+			
+			tunnelData[k] = json.lvl_array;
+			tunnelDataDyn[k] = json.dynamic_array;
+			
+			for(let i = 0; i < tunnelDataDyn[k].length; i++)
+				{
+					tunnelDataDyn[k][i] = new Tile_To_Draw(json.dynamic_array[i].tile_id, false, json.dynamic_array[i].i,json.dynamic_array[i].j,new FirePit_Tile(json.dynamic_array[i].i,json.dynamic_array[i].j));
+				}
+			
+		}
+		
+		);
+			}
 		
 	}
 	

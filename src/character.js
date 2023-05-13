@@ -27,8 +27,12 @@ class Character{
 	{
 		
 		//blocking character when on map limit
-		if(x < 0 || y < 0 || x + this.w > map.levels[map.curent_level].sizeX*100 || y + this.h > map.levels[map.curent_level].sizeY*100)
+		if(x < 0 || y < 0 || x + this.w > map.levels[map.curent_level].sizeY*100 || y + this.h > map.levels[map.curent_level].sizeX*100)
+		{
+			//console.log("map.levels[map.curent_level].sizeX ");
 			return false;
+			
+		}
 		
 		//adjusting y to calc collision with feets
 		y+=this.h;
@@ -47,15 +51,20 @@ class Character{
 				j = floor(y/100) + l;
 				
 				//checking for oob
-				if(i < 0 || j < 0 || i > map.levels[map.curent_level].sizeX || j > map.levels[map.curent_level].sizeY)
+				if(i < 0 || j < 0 || i > map.levels[map.curent_level].sizeY || j > map.levels[map.curent_level].sizeX)
+				{
+					
 					continue;
+				}
 					
 				//getting tile
 				let tile = map.levels[map.curent_level].lvl_array[j][i];
 				
 				//checking for oob
 				if(tile == undefined)
+				{
 					continue;
+				}
 				
 				//checking collision between character and tile hitboxes 
 				if(x > i*100+tile.hitboxX && x < i*100 + tile.hitboxX + tile.hitboxW && y > j*100 + tile.hitboxY && y < j*100 + tile.hitboxY + tile.hitboxH
@@ -81,11 +90,46 @@ class Player extends Character{
 	
 	update(){
 		this.move();
+		this.checkPosition();
 	}
 	
 	setSpawnPosition(){
 		this.x = 200;
 		this.y = 400;
+	}
+	
+	spawnAt(x,y){
+		this.x = x;
+		this.y = y;
+	}
+	
+	//checks if player is standing on a special tile with interactivity
+	checkPosition()
+	{
+		let i = floor((player.x+(player.w/2))/100);
+		let j = floor((player.y+(player.h - 5))/100);
+		
+		//rail transition tile
+		if(player.x < 100 && map.levels[map.curent_level].lvl_array[j][i].game_id == 5)
+		{
+			if(map.levels[map.curent_level].id_left != -1)
+			{
+				messageTravelTo.setMessage("press E to travel to " + map.levels[map.levels[map.curent_level].id_left].name)
+				messageTravelTo.display = true;
+			}
+		}
+		else if(player.x > map.levels[map.curent_level].sizeY*100 - 100 && map.levels[map.curent_level].lvl_array[j][i].game_id == 5)
+		{
+			if(map.levels[map.curent_level].id_right != -1)
+			{
+				messageTravelTo.display = true;
+				messageTravelTo.setMessage("press E to travel to " + map.levels[map.levels[map.curent_level].id_right].name)
+			}
+		}
+		else
+		{
+			messageTravelTo.display = false;
+		}
 	}
 	
 	move(){
@@ -163,7 +207,57 @@ class Player extends Character{
 			keys[84] = 0;
 			
 		}
+		//drop flare
+		if(keys[89])
+		{
+			map.levels[map.curent_level].addDynamicElement(new Tile_To_Draw(1000, false, 0,0,new Flare_Item(player.x+player.w/2,player.y+player.h)));
+			
+			keys[89] = 0;
+			
+		}
+		//e
+		if(keys[69])
+		{
+			let i = floor((player.x+(player.w/2))/100);
+			let j = floor((player.y+(player.h - 5))/100);
+			
+			//traveling to another level
+			if(player.x < 100 && map.levels[map.curent_level].lvl_array[j][i].game_id == 5)
+				{
+					
+					if(map.levels[map.curent_level].id_left != -1)
+						{
+							map.curent_level = map.levels[map.curent_level].id_left;
+							//player.setSpawnPosition();
+							player.spawnAt(map.levels[map.curent_level].sizeY*100-100,400)
+							camera.update();
+							gameState = LVL_TRANSITION;
+						}
+				}
+			else if(player.x > map.levels[map.curent_level].sizeY*100 - 100 && map.levels[map.curent_level].lvl_array[j][i].game_id == 5)
+				{
+					
+					if(map.levels[map.curent_level].id_right != -1)
+						{
+							map.curent_level = map.levels[map.curent_level].id_right;
+							//player.setSpawnPosition();
+							player.spawnAt(100,400)
+							camera.update();
+							gameState = LVL_TRANSITION;
+						}
+				}
+			
+			
+			keys[69] = 0;
+			
+		}
 		
+	}
+	
+	//drawing character
+	draw(){
+		super.draw();
+		map.drawFlashLight();
 	}
 	
 }

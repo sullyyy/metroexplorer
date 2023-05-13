@@ -103,10 +103,11 @@ class Menu {
 		textSize(20);
 		text('Move = ← → ↑ ↓', windowWidth/2, (windowHeight/4)+100);
 		text('Turn on/off flashlight = T', windowWidth/2, (windowHeight/4)+120);
-		text('Open/close doors = E', windowWidth/2, (windowHeight/4)+140);
-		text('Action/Attack = Space', windowWidth/2, (windowHeight/4)+160);
-		text('Switch weapon = Ctrl', windowWidth/2, (windowHeight/4)+180);
-		text('Reload weapon = R', windowWidth/2, (windowHeight/4)+200);
-		text('Cancel/Menu = Esc', windowWidth/2, (windowHeight/4)+220);
+		text('Drop Flare = Y', windowWidth/2, (windowHeight/4)+140);
+		//text('Open/close doors = E', windowWidth/2, (windowHeight/4)+140);
+		//text('Action/Attack = Space', windowWidth/2, (windowHeight/4)+160);
+		//text('Switch weapon = Ctrl', windowWidth/2, (windowHeight/4)+180);
+		//text('Reload weapon = R', windowWidth/2, (windowHeight/4)+200);
+		text('Cancel/Menu = Esc', windowWidth/2, (windowHeight/4)+160);
 	}
 }
