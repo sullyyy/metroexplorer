@@ -40,6 +40,7 @@ class Menu {
 		}
 		if(keys[32] && selected == 0)
 		{
+			//map = new Map();
 			gameState = PLAY;
 			camera.resetCameraPos();
 			player.setSpawnPosition();

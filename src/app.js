@@ -1,3 +1,4 @@
+let ctx;
 
 const MAIN_MENU = 0;
 const PLAY = 1;
@@ -44,6 +45,12 @@ function preload() {
 	
 	factionslist = loadImage('assets/img/factionslist.png');
 	
+	arrow = loadImage('assets/img/arrow.png');
+	
+	anim_dwight = loadImage('assets/anim/animation_dwight.png');
+	
+	bear_trap = loadImage('assets/img/bear_trap.png');
+	
 	//loading fonts
 	font = loadFont('assets/font/joystix.ttf');
 	
@@ -66,14 +73,14 @@ function setup() {
 	
 	//creating canvas
 	cnv = createCanvas(windowWidth, windowHeight);
-	let ctx = cnv.canvas.getContext('2d', {willReadFrequently: true});
+	ctx = cnv.canvas.getContext('2d', {willReadFrequently: true});
 	
-	//creating an offscreen drawing buffer
+	//creating offscreen drawing buffers
 	pg = createGraphics(windowWidth,windowHeight);
-	
 	pg_minimap = createGraphics(windowWidth,windowHeight);
 	pg_circle = createGraphics(windowWidth,windowHeight);
 	pg_circle.translate(10,10)
+	
 	
 	//setting up framerate
 	frameRate(fr);
@@ -87,7 +94,7 @@ function setup() {
 	camera = new Camera(0, 0,1000,800);
 	
 	//creating Player
-	player = new Player(100,100,36,70,player_img,1000)
+	player = new Player(100,100,36,70,anim_dwight,1000)
 	
 	//creating map
 	map = new Map();
@@ -101,7 +108,11 @@ function setup() {
 	//creating minimap
 	minimap = new MiniMap();
 	
+	//other stuff
 	messageTravelTo = new Message(0,0,"press E to travel to ",false)
+	messageTrap = new Message(0,0,"press E to free yourself from the trap !",false)
+	
+	arrowAnimation = new Animation(25,10);
 	
 }
 

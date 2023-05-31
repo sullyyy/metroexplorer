@@ -35,7 +35,7 @@ class FirePit_Tile {
 		this.j = j;
 		this.y = i*100 + this.hitboxY;
 		this.h = this.hitboxH;
-	 this.animation = new Fire_Animation(4);
+	 this.animation = new Fire_Animation(4,100);
 	}
 	
 	draw(){
@@ -43,6 +43,22 @@ class FirePit_Tile {
 	}
 	
 	
+}
+
+class Timer{
+	constructor() {
+		this.last = new Date().getTime();
+	}
+	
+	updateTimer(timeElapsed){
+		let now = new Date().getTime();
+		let delta = now - this.lastLvlTrans;
+		if (delta >= timeElapsed) {
+			this.last = now;
+			return true;
+		}
+		return false;
+	}
 }
 
 class Flare_Item {
@@ -61,6 +77,41 @@ class Flare_Item {
 			fill(255,0,0);
 			rect(this.x+camera.offSetX,this.y+camera.offSetY,10,5);
 		pop();
+	}
+	
+	
+}
+
+class Bear_Trap {
+	constructor(x,y) {
+		this.x = x;
+		this.y = y;
+		this.w = 30;
+		this.h = 23;
+		//this.h = 0;
+		this.i = floor(x/100);
+		this.j = floor(y/100);
+		this.group = "TRAP";
+		this.open = true;
+	}
+	
+	draw(){
+		
+		let srcY = 0;
+		
+		if(!this.open)
+			srcY = 23;
+			
+		//image(bear_trap,this.j*100+camera.offSetX,this.i*100+camera.offSetY,30,23,0,srcY,30,23);
+		image(bear_trap,this.x+camera.offSetX,this.y+camera.offSetY,30,23,0,srcY,30,23);
+		
+		//hitbox
+		/*push();
+			noFill();
+			stroke("red");
+			rect(this.x+camera.offSetX,this.y+camera.offSetY,30,23);
+		pop();*/
+		
 	}
 	
 	
@@ -132,6 +183,36 @@ class Level {
 		
 		
 	}
+	
+	createNewLevel(){
+		this.create();
+		this.z_index_map = [];
+		this.sort();
+	}
+	
+	loadLevel(){
+		//id < 2 = stations
+		if(id < 2)
+		{
+			this.lvl_array = stationsData[id];
+			this.dynamic_elements = stationsDataDyn[id];
+		}
+		//id >= 1000 = tunnels
+		else if(id >= 1000)
+		{
+			this.lvl_array = tunnelData[id - 1000];
+			this.dynamic_elements = tunnelDataDyn[id - 1000];
+			
+		}
+		
+		this.z_index_map = [];
+		//this.dynamic_elements = [];
+		
+		this.sort();
+		
+	}
+	
+	
 	
 	create(){
 		this.createEmptyMap();
@@ -216,7 +297,7 @@ class Map {
 		this.lastLvlTrans = new Date().getTime();
 		this.lvltransframe = 0;
 		
-		this.fire_animation = new Fire_Animation(4);
+		this.fire_animation = new Fire_Animation(4,100);
 		
 	}
 	
@@ -240,6 +321,12 @@ class Map {
 		//tunnels
 		this.levels[1000] = new Level(1000,"DARK TUNNEL",5,20,0,1);
 		this.levels[1001] = new Level(1001,"DARK TUNNEL",5,20,1,-1);
+		
+		//testing traps
+		this.levels[0].addDynamicElement(new Tile_To_Draw(1000, false, 0,0,new Bear_Trap(200,300)));
+		this.levels[0].addDynamicElement(new Tile_To_Draw(1001, false, 0,0,new Bear_Trap(300,450)));
+		this.levels[0].addDynamicElement(new Tile_To_Draw(1002, false, 0,0,new Bear_Trap(700,250)));
+		
 	}
 	
 	draw(){
@@ -264,6 +351,7 @@ class Map {
 		
 		//draw messages
 		messageTravelTo.draw();
+		messageTrap.draw();
 	}
 	
 	drawFloor(){
@@ -281,8 +369,6 @@ class Map {
 	drawGameObjects(){
 		
 	    pg.clear();
-		
-		
 		
 		//looping around z index drawing list
 		for(let i = 0; i < this.levels[this.curent_level].z_index_map.length; i++)
@@ -311,6 +397,8 @@ class Map {
 						//making tile darker
 						this.drawDarkness(destX,destY,destW,destH)
 						
+						this.drawOverlay(tile,destX,destY)
+						
 						//drawHitbox
 						this.drawHitbox(tile,destX,destY);
 						
@@ -331,12 +419,13 @@ class Map {
 				if(!tile.bckgrnd)
 					{
 						tile.obj.draw();
+						
 						//draws tile info
-						push();
+						/*push();
 							fill(0)
 							textSize(10);
 							text("z " + tile.get_z_index(),player.x + camera.offSetX + 25,player.y + camera.offSetY + 25)
-						pop();
+						pop();*/
 					}
 			}
 		
@@ -344,7 +433,7 @@ class Map {
 		this.drawLighting();
 		
 		//setting blendMode to apply darkness and lights to map
-		blendMode(MULTIPLY  );
+		blendMode(MULTIPLY);
 		
 		//blending offscreen buffer with drawn map
 		image(pg, 0, 0);
@@ -370,6 +459,44 @@ class Map {
 			noFill();
 			stroke(255,0,0);
 			rect(destX+hitboxX,destY+hitboxY,hitboxW,hitboxH);
+		pop();
+	}
+	
+	//draw overlay stuff over tile
+	drawOverlay(tile,x,y)
+	{
+		push();
+		
+		//tinting arrow color
+		tint(255, arrowAnimation.updateAnimation()/10);
+	
+		//detecting rail tile and player position 
+		if(tile.obj.game_id == 5 && (tile.j < 1 || tile.j == this.levels[this.curent_level].sizeY - 1) && (floor((player.y+player.h)/100) == tile.i && floor((player.x + player.w/2)/100) == tile.j))
+		{
+			if(tile.j < 1)
+				{
+					if(this.levels[this.curent_level].id_left == -1)
+						{
+							noTint();
+							pop();
+							return;
+						}
+					translate(x,y);
+					scale(-1,1);
+					image(arrow,-100,0);
+				}
+			else
+			{
+				if(this.levels[this.curent_level].id_right == -1)
+						{
+							noTint();
+							pop();
+							return;
+						}
+				image(arrow,x,y);
+			}
+		}
+		noTint();
 		pop();
 	}
 	
@@ -479,9 +606,10 @@ class Map {
 		}
 		
 		//drawing player torchlight (white triangle)
-		pg.fill(255,255,255);
+		pg.fill(255,255,237)
 		if(gameState != EDITOR && player.flashlightOn)
 			pg.triangle(player.x+player.w/2+camera.offSetX, player.y+player.h/2+camera.offSetY,tlx1,tly1,tlx2,tly2);
+		
 	}
 	
 	//drawing grid

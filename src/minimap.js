@@ -9,12 +9,16 @@ class MiniMap {
 		
 		push();
 		
+		
+		
 		let startX = windowWidth - 200;
 		let startY = windowHeight - 200;
 		let l = map.levels[map.curent_level];
 		
 		pg_circle.clear();
 		pg_minimap.clear();
+		
+		
 		
 		pg_minimap.fill(0);
 		pg_minimap.rect(0,0,1000,800)
@@ -60,9 +64,11 @@ class MiniMap {
 		image(img_c,0,0);
 		
 		strokeWeight(3)
-		stroke(255,0,0)
+		stroke(250,250,250)
 		noFill()
 		circle(windowWidth - 100, windowHeight - 100, 200);
+		
+		
 		
 		pop();
 	}

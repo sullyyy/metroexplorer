@@ -90,10 +90,17 @@ class File {
 //loading a file map
 function handleFile(file)
 {
-	map.levels[map.curent_level].lvl_array = file.data;
 	editor.fileInputloadB.elt.value = "";
 	editor.buttonsAssArr["fileInputloadB"].elt.blur();
+	map.levels[map.curent_level].lvl_array = file.data.lvl_array;
+	
+	for(let i = 0; i < file.data.dynamic_array.length; i++)
+	{
+		map.levels[map.curent_level].dynamic_elements[i] = new Tile_To_Draw(file.data.dynamic_array[i].tile_id, false, file.data.dynamic_array[i].i,file.data.dynamic_array[i].j,new FirePit_Tile(file.data.dynamic_array[i].i,file.data.dynamic_array[i].j));
+	}
+	
 	map.levels[map.curent_level].sort();
+	
 }
 
 

@@ -1,8 +1,9 @@
 class Animation {
-	constructor (nbrOfFrames) {
+	constructor (nbrOfFrames, timeElapsed) {
 		this.last = new Date().getTime();
 		this.frame = 0;
 		this.nbrOfFrames = nbrOfFrames;
+		this.timeElapsed = timeElapsed;
 		this.going = true;
 		
 	}
@@ -11,7 +12,7 @@ class Animation {
 		
 		let now = new Date().getTime();
 		let delta = now - this.last;
-		if (delta >= 100) {
+		if (delta >= this.timeElapsed) {
 			
 			this.frame++;
 			this.last = now;
@@ -28,8 +29,8 @@ class Animation {
 }
 
 class Fire_Animation extends Animation{
-	constructor (nbrOfFrames) {
-		super(nbrOfFrames);
+	constructor (nbrOfFrames,timeElapsed) {
+		super(nbrOfFrames,timeElapsed);
 	}
 	
 }

@@ -427,7 +427,8 @@ function seltunBEvent(){
 
 //new option event
 function mp_new(){
-	map.levels[map.curent_level].create();
+	//map.levels[map.curent_level].create();
+	map.levels[map.curent_level].createNewLevel();
 }
 
 //save option event
@@ -436,22 +437,16 @@ function mp_save(){
 	//creating new map object with background array and dynamic array
 	let combined_map = {lvl_array:map.levels[map.curent_level].lvl_array,dynamic_array:map.levels[map.curent_level].dynamic_elements}
 	
-	//console.log("combif ", combined_map);
-	
 	if(map.curent_level >= 1000)
 		File.save(combined_map, "tunnel")
 	else
 		File.save(combined_map, game_map.stations[map.curent_level].name)
-	
-	/*if(map.curent_level >= 1000)
-		File.save(map.levels[map.curent_level].lvl_array, "tunnel")
-	else
-		File.save(map.levels[map.curent_level].lvl_array, game_map.stations[map.curent_level].name)*/
 }
 
 //load option event
 function mp_load(){
-	map.levels[map.curent_level].create();
+	//map.levels[map.curent_level].create();
+	//map.levels[map.curent_level].loadLevel();
 }
 
 

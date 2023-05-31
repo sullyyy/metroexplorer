@@ -6,10 +6,13 @@ class Character{
 		this.h = h;
 		this.img = img;
 		this.id = id;
+		this.animation = new Animation(7,130);
+		this.moving = false;
 		 
 		 this.faceDirX = 0;
 		 this.faceDirY = 0;
 		 
+		//foot height
 		this.d = 10;
 	 }
 	
@@ -19,7 +22,39 @@ class Character{
 	
 	//drawing character
 	draw(){
-		image(this.img, this.x + camera.offSetX, this.y+ camera.offSetY, this.w, this.h);
+		//image(this.img, this.x + camera.offSetX, this.y+ camera.offSetY, this.w, this.h);
+		this.drawAnimation()
+	}
+	
+	drawAnimation(){
+		
+		//getting current frame from animation
+		let frame = this.animation.updateAnimation()/100;
+		let srcY = 0;
+		
+		//stop animation if character is immobile
+		if(!this.moving)
+			frame = 0;
+		
+		//getting facing direction of character
+		if(this.faceDirY == -1)
+			srcY = 70;
+		if(this.faceDirX == 1)
+			srcY = 140;
+		if(this.faceDirX == -1)
+		{
+			//mirroring img if going to the left
+			srcY = 140;
+			push();
+				translate(this.x + camera.offSetX,this.y+ camera.offSetY);
+				scale(-1,1);
+				image(this.img, -36, 0, this.w, this.h,frame*36,srcY,36,70);
+			pop();
+		}
+		else
+			//drawing img
+			image(this.img, this.x + camera.offSetX, this.y+ camera.offSetY, this.w, this.h,frame*36,srcY,36,70);
+		
 	}
 	
 	//checking for collision with game objects
@@ -34,7 +69,7 @@ class Character{
 			
 		}
 		
-		//adjusting y to calc collision with feets
+		//adjusting y to calc collision with feet
 		y+=this.h;
 		
 		let i;
@@ -81,6 +116,16 @@ class Character{
 	
 }
 
+//checking collision between obj A and obj B
+function checkCollisionAB(obj_A, obj_B)
+{
+	if(obj_A.x > obj_B.x && obj_A.x < obj_B.x + obj_B.w && obj_A.y > obj_B.y && obj_A.y < obj_B.y + obj_B.h
+	  || obj_A.x + obj_A.w > obj_B.x && obj_A.x + obj_A.w < obj_B.x + obj_B.w && obj_A.y > obj_B.y && obj_A.y < obj_B.y + obj_B.h)
+		return true;
+	return false;
+}
+
+//player character class
 class Player extends Character{
 	constructor (x, y, w, h, img, id) {
 		super(x, y, w, h, img, id);
@@ -103,13 +148,21 @@ class Player extends Character{
 		this.y = y;
 	}
 	
+	//checking if player middle foot point is over obj
+	checkWalkOverMid(obj)
+	{
+		if(this.x + this.w/2 > obj.x && this.x + this.w/2 < obj.x + obj.w && this.y + (this.h - this.d/2) > obj.y && this.y + (this.h - this.d/2) < obj.y + obj.h)
+			return true;
+		return false;
+	}
+	
 	//checks if player is standing on a special tile with interactivity
 	checkPosition()
 	{
 		let i = floor((player.x+(player.w/2))/100);
 		let j = floor((player.y+(player.h - 5))/100);
 		
-		//rail transition tile
+		//rail transition tile to another level
 		if(player.x < 100 && map.levels[map.curent_level].lvl_array[j][i].game_id == 5)
 		{
 			if(map.levels[map.curent_level].id_left != -1)
@@ -130,9 +183,28 @@ class Player extends Character{
 		{
 			messageTravelTo.display = false;
 		}
+		
+		//traps
+		for(let k = 0; k < map.levels[map.curent_level].dynamic_elements.length;k++)
+			{
+				let t = map.levels[map.curent_level].dynamic_elements[k].obj;
+				
+				if(t instanceof Bear_Trap)
+					{
+						if(this.checkWalkOverMid(t) && t.open)
+						{
+						   messageTrap.display = true;
+						   t.open = false;
+						   this.move_speed = 0;
+						}
+					}
+			}
 	}
 	
 	move(){
+		
+		this.moving = false;
+		
 		//left arrow pushed
 		if(keys[LEFT_ARROW])
 		{
@@ -147,6 +219,8 @@ class Player extends Character{
 				map.levels[map.curent_level].resort();
 			}
 			
+			//updating player variables
+			this.moving = true;
 			this.faceDirX = -1;
 			this.faceDirY = 0;
 			
@@ -162,6 +236,7 @@ class Player extends Character{
 				map.levels[map.curent_level].resort();
 			}
 			
+			this.moving = true;
 			this.faceDirX = 1;
 			this.faceDirY = 0;
 			
@@ -178,6 +253,7 @@ class Player extends Character{
 				map.levels[map.curent_level].resort();
 			}
 			
+			this.moving = true;
 			this.faceDirY = -1;
 			this.faceDirX = 0;
 		}
@@ -193,6 +269,7 @@ class Player extends Character{
 				map.levels[map.curent_level].resort();
 			}
 			
+			this.moving = true;
 			this.faceDirY = 1;
 			this.faceDirX = 0;
 		}
@@ -207,7 +284,7 @@ class Player extends Character{
 			keys[84] = 0;
 			
 		}
-		//drop flare
+		//drop flare Y
 		if(keys[89])
 		{
 			map.levels[map.curent_level].addDynamicElement(new Tile_To_Draw(1000, false, 0,0,new Flare_Item(player.x+player.w/2,player.y+player.h)));
@@ -215,7 +292,7 @@ class Player extends Character{
 			keys[89] = 0;
 			
 		}
-		//e
+		//Pressing the E key
 		if(keys[69])
 		{
 			let i = floor((player.x+(player.w/2))/100);
@@ -247,6 +324,13 @@ class Player extends Character{
 						}
 				}
 			
+			//freeing from trap
+			if(player.move_speed == 0)
+			{
+				messageTrap.display = false;
+				this.move_speed = 5;
+			}
+			
 			
 			keys[69] = 0;
 			
@@ -258,6 +342,13 @@ class Player extends Character{
 	draw(){
 		super.draw();
 		map.drawFlashLight();
+		
+		//hitbox
+		/*push();
+			noFill();
+			stroke("red");
+			rect(this.x+camera.offSetX,this.y+(this.h-this.d)+camera.offSetY,this.w,this.d);
+		pop();*/
 	}
 	
 }
